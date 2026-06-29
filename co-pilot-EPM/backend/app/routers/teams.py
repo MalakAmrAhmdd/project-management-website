@@ -10,6 +10,13 @@ from app.schemas.team import TeamCreate, TeamUpdate, TeamRead, TeamWithMembers
 
 router = APIRouter()
 
+#using dependency injection pattern to fetch team and raise 404 if not found
+async def get_team_or_404(team_id: int, db: AsyncSession = Depends(get_db)) -> Team:
+    team = await db.get(Team, team_id)
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
+    return team
+
 
 @router.get("/", response_model=List[TeamRead])
 async def list_teams(db: AsyncSession = Depends(get_db)):
@@ -38,10 +45,8 @@ async def create_team(data: TeamCreate, db: AsyncSession = Depends(get_db)):
 
 
 @router.patch("/{team_id}", response_model=TeamRead)
-async def update_team(team_id: int, data: TeamUpdate, db: AsyncSession = Depends(get_db)):
-    team = await db.get(Team, team_id)
-    if not team:
-        raise HTTPException(status_code=404, detail="Team not found")
+async def update_team(data: TeamUpdate,
+                    db: AsyncSession = Depends(get_db), team: Team = Depends(get_team_or_404)):
     for key, value in data.model_dump(exclude_unset=True).items():
         setattr(team, key, value)
     await db.flush()
@@ -50,8 +55,5 @@ async def update_team(team_id: int, data: TeamUpdate, db: AsyncSession = Depends
 
 
 @router.delete("/{team_id}", status_code=204)
-async def delete_team(team_id: int, db: AsyncSession = Depends(get_db)):
-    team = await db.get(Team, team_id)
-    if not team:
-        raise HTTPException(status_code=404, detail="Team not found")
+async def delete_team( db: AsyncSession = Depends(get_db), team: Team = Depends(get_team_or_404)):
     await db.delete(team)
