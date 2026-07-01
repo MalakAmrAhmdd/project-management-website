@@ -3,7 +3,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { Team } from "@/types";
-import { cn } from "@/lib/utils";
 import { InlineInput } from "@/components/InlineInput";
 import {
   Plus, Trash2, Users, ChevronRight, FolderKanban,
@@ -47,6 +46,14 @@ export default function TeamsPage() {
 
   const memberCountByTeam = (teamId: number) => members.filter((m) => m.team_id === teamId).length;
   const projectCountByTeam = (teamId: number) => projects.filter((p) => p.team_id === teamId).length;
+
+   if (isLoading) {
+    return (
+      <div className="flex justify-center py-10">
+        Loading teams now please wait ....
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
