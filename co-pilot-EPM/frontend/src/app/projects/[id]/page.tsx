@@ -14,6 +14,7 @@ import Link from "next/link";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useParams } from "next/navigation";
+import { useMemberAllocations } from "@/hooks/useMemberAllocations";
 
 /** Today's date as YYYY-MM-DD string */
 const TODAY = new Date().toISOString().split("T")[0];
@@ -564,23 +565,9 @@ function AllocationPanel({ milestoneId, milestoneName, members, projectId }: {
     qc.invalidateQueries({ queryKey: ["project", projectId] });
   };
 
-  const createAlloc = useMutation({
-    mutationFn: api.createAllocation,
-    onSuccess: () => { invalidateAll(); toast.success("Resource allocated"); setAdding(false); },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const updateAlloc = useMutation({
-    mutationFn: ({ id, ...data }: { id: number } & Partial<Allocation>) => api.updateAllocation(id, data),
-    onSuccess: () => { invalidateAll(); toast.success("Allocation updated"); },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const deleteAlloc = useMutation({
-    mutationFn: api.deleteAllocation,
-    onSuccess: () => { invalidateAll(); toast.success("Allocation removed"); },
-  });
-
+  const { createAlloc, updateAlloc, deleteAlloc } =
+    useMemberAllocations({ milestoneId });
+    
   const contributions = contribs?.contributions || [];
   const allocatedMemberIds = new Set(allocations.map((a: any) => a.member_id));
 

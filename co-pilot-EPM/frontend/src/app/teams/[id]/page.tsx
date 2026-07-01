@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { cn, getAllocationColor, getAllocationStatus, formatDate } from "@/lib/utils";
-import { Member, Team, TeamWithMembers } from "@/types";
+import { ContributionRow, Member, Team, TeamWithMembers } from "@/types";
 import { InlineInput } from "@/components/InlineInput";
 import { ColumnToggle, useColumnVisibility, type ColumnDef } from "@/components/ColumnToggle";
 import {
@@ -14,6 +14,7 @@ import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import toast from "react-hot-toast";
 import { useParams } from "next/navigation";
+import { MemberAllocations } from "@/components/MemberAllocations";
 
 const COLUMNS: ColumnDef[] = [
   { key: "name", label: "Name" },
@@ -220,12 +221,7 @@ function TeamMemberRow({
   onDelete: () => void;
   isVisible: (key: string) => boolean;
 }) {
-  const { data: contribs } = useQuery({
-    queryKey: ["member-contributions", member.id],
-    queryFn: () => api.getMemberContributions(member.id),
-    enabled: isExpanded,
-  });
-
+  
   const alloc = member.allocation_percentage;
   const StatusIcon = alloc > 1 ? AlertTriangle : alloc === 1 ? CheckCircle2 : alloc > 0 ? AlertCircle : null;
   const colCount = ["name", "email", "role", "allocation", "velocity", "actions"].filter(isVisible).length + 1;
@@ -275,35 +271,7 @@ function TeamMemberRow({
       {isExpanded && (
         <tr>
           <td colSpan={colCount} className="bg-surface-50 px-8 py-4">
-            <h4 className="font-semibold text-sm text-surface-700 mb-2">Contribution Matrix</h4>
-            {contribs?.contributions?.length ? (
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-2 px-2 font-medium text-surface-500">Project</th>
-                    <th className="text-left py-2 px-2 font-medium text-surface-500">Milestone</th>
-                    <th className="text-right py-2 px-2 font-medium text-surface-500">Velocity (100%)</th>
-                    <th className="text-right py-2 px-2 font-medium text-surface-500">Contribution %</th>
-                    <th className="text-right py-2 px-2 font-medium text-surface-500">Effective Velocity</th>
-                    <th className="text-right py-2 px-2 font-medium text-surface-500">Avg FTO</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {contribs.contributions.map((c: any) => (
-                    <tr key={c.allocation_id} className="border-b border-surface-100">
-                      <td className="py-2 px-2">{c.project_name}</td>
-                      <td className="py-2 px-2 font-medium">{c.milestone_name}</td>
-                      <td className="py-2 px-2 text-right font-mono">{c.velocity_if_100_pct}</td>
-                      <td className="py-2 px-2 text-right font-mono">{(c.contribution_percentage * 100).toFixed(0)}%</td>
-                      <td className="py-2 px-2 text-right font-mono">{c.effective_velocity.toFixed(1)}</td>
-                      <td className="py-2 px-2 text-right font-mono">{c.average_fto}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <p className="text-surface-400 text-xs">No active allocations for this member</p>
-            )}
+            <MemberAllocations memberId={member.id} />
           </td>
         </tr>
       )}
@@ -324,6 +292,11 @@ function NewMemberRow({
   const [role, setRole] = useState("Engineer");
   const nameRef = useRef<HTMLInputElement>(null);
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && name && email) onSave({ name, email, role, team_id: teamId });
+    if (e.key === "Escape") onCancel();
+  };
+
   useEffect(() => { nameRef.current?.focus(); }, []);
 
   return (
@@ -332,17 +305,19 @@ function NewMemberRow({
       {visibleCols("name") && (
         <td className="px-3 py-2">
           <input ref={nameRef} value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" className="input py-1 text-sm"
-            onKeyDown={(e) => { if (e.key === "Enter" && name && email) onSave({ name, email, role, team_id: teamId }); if (e.key === "Escape") onCancel(); }} />
+            onKeyDown={handleKeyDown} />
         </td>
       )}
       {visibleCols("email") && (
         <td className="px-3 py-2">
-          <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className="input py-1 text-sm" />
+          <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className="input py-1 text-sm"
+            onKeyDown={handleKeyDown} />
         </td>
       )}
       {visibleCols("role") && (
         <td className="px-3 py-2">
-          <input value={role} onChange={(e) => setRole(e.target.value)} placeholder="Role" className="input py-1 text-sm" />
+          <input value={role} onChange={(e) => setRole(e.target.value)} placeholder="Role" className="input py-1 text-sm"
+            onKeyDown={handleKeyDown} />
         </td>
       )}
       {visibleCols("allocation") && <td></td>}
