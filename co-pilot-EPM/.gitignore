@@ -13,3 +13,4 @@ build/
 *.egg
 .mypy_cache/
 .pytest_cache/
+./test.py/
