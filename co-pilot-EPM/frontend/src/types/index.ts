@@ -186,3 +186,17 @@ export interface TimelineProject {
   end_date: string;
   phases: TimelinePhase[];
 }
+
+export interface ContributionRow {
+  allocation_id: number;
+  member_id: number;
+  member_name: string;
+  milestone_id: number;
+  milestone_name: string;
+  milestone_state: string;
+  project_name: string;
+  velocity_if_100_pct: number;
+  contribution_percentage: number;
+  effective_velocity: number;
+  average_fto: number;
+}

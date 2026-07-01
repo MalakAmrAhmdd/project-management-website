@@ -3,8 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { cn, getStateColor, getAllocationColor, formatDate } from "@/lib/utils";
-import { Project, Milestone, Member, Allocation, ChangeLogEntry, TimelineProject } from "@/types";
+import { cn, getStateColor, getAllocationColor, formatDate, flattenMilestones } from "@/lib/utils";
+import { Project, Milestone, Member, Allocation, ChangeLogEntry, TimelineProject, ContributionRow } from "@/types";
 import {
   Target, Users, TrendingUp, Calendar, Plus, Trash2,
   Clock, Activity, History, BarChart3, ChevronDown,
@@ -14,32 +14,22 @@ import {
   PieChart, Pie, Cell,
 } from "recharts";
 import toast from "react-hot-toast";
+import { useMemberAllocations } from "@/hooks/useMemberAllocations";
 
 export default function ManagementPage() {
   const qc = useQueryClient();
   const { data: projects = [] } = useQuery({ queryKey: ["projects"], queryFn: api.listProjects });
-  const { data: timeline = [] } = useQuery({ queryKey: ["project-timeline"], queryFn: api.projectTimeline });
-  const { data: members = [] } = useQuery({ queryKey: ["members"], queryFn: () => api.listMembers() });
+const { data: timeline = [] } = useQuery({
+    queryKey: ["project-timeline"],
+    queryFn: api.projectTimeline,
+  });  const { data: members = [] } = useQuery({ queryKey: ["members"], queryFn: () => api.listMembers() });
 
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
   const [selectedMilestones, setSelectedMilestones] = useState<number[]>([]);
   const [tab, setTab] = useState<"milestone" | "timeline" | "changelog">("milestone");
 
   // Build a flat list of all milestones from timeline
-  const allMilestones: { id: number; name: string; projectName: string; phaseName: string; state: string }[] = [];
-  timeline.forEach((proj) => {
-    proj.phases.forEach((phase) => {
-      phase.milestones.forEach((ms) => {
-        allMilestones.push({
-          id: ms.id,
-          name: ms.name,
-          projectName: proj.name,
-          phaseName: phase.name,
-          state: ms.state,
-        });
-      });
-    });
-  });
+  const allMilestones = flattenMilestones(timeline);
 
   const projectMilestones = selectedProjectId
     ? allMilestones.filter(ms => {
@@ -181,8 +171,6 @@ function MilestonePanel({ milestoneId, milestoneInfo, members }: {
   milestoneInfo?: { name: string; projectName: string };
   members: Member[];
 }) {
-  const qc = useQueryClient();
-
   const { data: milestone } = useQuery({
     queryKey: ["milestone", milestoneId],
     queryFn: () => api.getMilestone(milestoneId),
@@ -198,52 +186,20 @@ function MilestonePanel({ milestoneId, milestoneInfo, members }: {
     queryFn: () => api.listAllocations({ milestone_id: milestoneId }),
   });
 
-  const createAlloc = useMutation({
-    mutationFn: api.createAllocation,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["milestone-contribs", milestoneId] });
-      qc.invalidateQueries({ queryKey: ["allocations", milestoneId] });
-      qc.invalidateQueries({ queryKey: ["milestone", milestoneId] });
-      qc.invalidateQueries({ queryKey: ["members"] });
-      toast.success("Resource allocated");
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const updateAlloc = useMutation({
-    mutationFn: ({ id, ...data }: { id: number } & Partial<Allocation>) => api.updateAllocation(id, data),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["milestone-contribs", milestoneId] });
-      qc.invalidateQueries({ queryKey: ["allocations", milestoneId] });
-      qc.invalidateQueries({ queryKey: ["milestone", milestoneId] });
-      qc.invalidateQueries({ queryKey: ["members"] });
-      toast.success("Allocation updated");
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const deleteAlloc = useMutation({
-    mutationFn: api.deleteAllocation,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["milestone-contribs", milestoneId] });
-      qc.invalidateQueries({ queryKey: ["allocations", milestoneId] });
-      qc.invalidateQueries({ queryKey: ["milestone", milestoneId] });
-      qc.invalidateQueries({ queryKey: ["members"] });
-      toast.success("Allocation removed");
-    },
-  });
+  const { createAlloc, updateAlloc, deleteAlloc } =
+    useMemberAllocations({ milestoneId });
 
   const [addingResource, setAddingResource] = useState(false);
   const [newMemberId, setNewMemberId] = useState<number | "">("");
   const [newVelocity, setNewVelocity] = useState("8");
   const [newContrib, setNewContrib] = useState("1.0");
 
-  const contributions = contribs?.contributions || [];
+const contributions: ContributionRow[] = contribs?.contributions || [];
   const totalVelocity = contributions.reduce((sum: number, c: any) => sum + c.effective_velocity, 0);
   const avgVelocity = contributions.length > 0 ? totalVelocity / contributions.length : 0;
 
   // Velocity bar chart data
-  const velocityData = contributions.map((c: any) => ({
+  const velocityData = contributions.map((c) => ({
     name: c.member_name?.split(" ")[0] || "?",
     velocity: c.effective_velocity,
     contribution: c.contribution_percentage * 100,
@@ -394,7 +350,7 @@ function MilestonePanel({ milestoneId, milestoneInfo, members }: {
 }
 
 function AllocationRow({ contribution, onUpdate, onDelete }: {
-  contribution: any;
+  contribution: ContributionRow;
   onUpdate: (data: Partial<Allocation>) => void;
   onDelete: () => void;
 }) {

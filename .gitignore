@@ -1,0 +1,27 @@
+# Ignore local development dependencies and build output
+co-pilot-EPM/frontend/node_modules/
+co-pilot-EPM/frontend/package-lock.json
+co-pilot-EPM/frontend/.next/
+
+# Ignore Python/backend artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.mypy_cache/
+.pytest_cache/
+
+# Ignore OS and editor files
+.DS_Store
+Thumbs.db
+
+.vscode/
