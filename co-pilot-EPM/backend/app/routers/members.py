@@ -1,16 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends,Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 from typing import List, Optional
 
 from app.database import get_db
-from app.models import Member, Allocation, Milestone, ItemState
+from app.models import Member
 from app.schemas.member import MemberCreate, MemberUpdate, MemberRead, MemberWithContributions
 from app.services.allocation_service import get_member_contribution_matrix
+from app.routers.dependencies import get_member_or_404
 
 router = APIRouter()
-
 
 @router.get("/", response_model=List[MemberRead])
 async def list_members(
@@ -25,20 +24,13 @@ async def list_members(
 
 
 @router.get("/{member_id}", response_model=MemberRead)
-async def get_member(member_id: int, db: AsyncSession = Depends(get_db)):
-    member = await db.get(Member, member_id)
-    if not member:
-        raise HTTPException(status_code=404, detail="Member not found")
+async def get_member( member: Member = Depends(get_member_or_404)):
     return member
 
-
-@router.get("/{member_id}/contributions")
-async def get_contributions(member_id: int, db: AsyncSession = Depends(get_db)):
-    member = await db.get(Member, member_id)
-    if not member:
-        raise HTTPException(status_code=404, detail="Member not found")
-    matrix = await get_member_contribution_matrix(db, member_id)
-    return {"member_id": member_id, "contributions": matrix}
+@router.get("/{member_id}/contributions", response_model=MemberWithContributions)
+async def get_contributions(db: AsyncSession = Depends(get_db), member: Member = Depends(get_member_or_404)):
+    matrix = await get_member_contribution_matrix(db, member.id)
+    return {"member_id": member.id, "contributions": matrix}
 
 
 @router.post("/", response_model=MemberRead, status_code=201)
@@ -51,20 +43,13 @@ async def create_member(data: MemberCreate, db: AsyncSession = Depends(get_db)):
 
 
 @router.patch("/{member_id}", response_model=MemberRead)
-async def update_member(member_id: int, data: MemberUpdate, db: AsyncSession = Depends(get_db)):
-    member = await db.get(Member, member_id)
-    if not member:
-        raise HTTPException(status_code=404, detail="Member not found")
+async def update_member(data: MemberUpdate, db: AsyncSession = Depends(get_db), member: Member = Depends(get_member_or_404)):
     for key, value in data.model_dump(exclude_unset=True).items():
         setattr(member, key, value)
     await db.flush()
     await db.refresh(member)
     return member
 
-
 @router.delete("/{member_id}", status_code=204)
-async def delete_member(member_id: int, db: AsyncSession = Depends(get_db)):
-    member = await db.get(Member, member_id)
-    if not member:
-        raise HTTPException(status_code=404, detail="Member not found")
+async def delete_member(member: Member = Depends(get_member_or_404), db: AsyncSession = Depends(get_db)):
     await db.delete(member)
