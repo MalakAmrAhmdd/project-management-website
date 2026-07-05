@@ -1,6 +1,5 @@
-from fastapi import APIRouter, Depends,Query, HTTPException
+from fastapi import APIRouter, Depends,Query
 from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 from app.database import get_db
