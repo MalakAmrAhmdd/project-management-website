@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends,Query
+from fastapi import APIRouter, Depends,Query, HTTPException
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
-
 from app.database import get_db
 from app.models import Member
 from app.schemas.member import MemberCreate, MemberUpdate, MemberRead, MemberWithContributions
@@ -22,16 +22,19 @@ async def list_members(
     result = await db.execute(q)
     return result.scalars().all()
 
-
 @router.get("/{member_id}", response_model=MemberRead)
-async def get_member( member: Member = Depends(get_member_or_404)):
+async def get_member(member: Member = Depends(get_member_or_404)):
     return member
 
 @router.get("/{member_id}/contributions", response_model=MemberWithContributions)
-async def get_contributions(db: AsyncSession = Depends(get_db), member: Member = Depends(get_member_or_404)):
+async def get_contributions( db: AsyncSession = Depends(get_db), member: Member = Depends(get_member_or_404)):
     matrix = await get_member_contribution_matrix(db, member.id)
-    return {"member_id": member.id, "contributions": matrix}
+    member_data = MemberRead.model_validate(member).model_dump()
 
+    return MemberWithContributions(
+        **member_data,
+        contribution_matrix=matrix
+    )
 
 @router.post("/", response_model=MemberRead, status_code=201)
 async def create_member(data: MemberCreate, db: AsyncSession = Depends(get_db)):
@@ -40,7 +43,6 @@ async def create_member(data: MemberCreate, db: AsyncSession = Depends(get_db)):
     await db.flush()
     await db.refresh(member)
     return member
-
 
 @router.patch("/{member_id}", response_model=MemberRead)
 async def update_member(data: MemberUpdate, db: AsyncSession = Depends(get_db), member: Member = Depends(get_member_or_404)):
