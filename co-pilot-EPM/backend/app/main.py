@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.routers import teams, members, projects, phases, milestones, epics, stories, allocations, changelog, dashboard
-from backend.app.exception_handlers import integrity_error_handler
+from app.exception_handlers import integrity_error_handler
 
 app = FastAPI(
     title="EBS Project Management",
