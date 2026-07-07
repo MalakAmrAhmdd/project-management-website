@@ -31,10 +31,11 @@ class MemberRead(BaseModel):
 
 
 class AllocationBrief(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-    id: int
+    allocation_id: int
     milestone_id: int
     milestone_name: Optional[str] = None
+    milestone_state: Optional[str] = None
+    phase_name: Optional[str]= None
     project_name: Optional[str] = None
     velocity_if_100_pct: float
     contribution_percentage: float
@@ -43,7 +44,7 @@ class AllocationBrief(BaseModel):
 
 
 class MemberWithContributions(MemberRead):
-    allocations: List["AllocationRead"] = []
+    allocations: List[AllocationBrief] = []
 
 
 from app.schemas.allocation import AllocationRead  # noqa: E402
