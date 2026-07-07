@@ -19,12 +19,6 @@ export default function ManagementPage() {
 
   const { projects, timeline, members, allMilestones } = useManagementData(selectedProjectId);
 
-  const projectMilestones = selectedProjectId
-    ? allMilestones.filter(ms => {
-        const proj = timeline.find(p => p.id === selectedProjectId);
-        return proj?.phases.some(ph => ph.milestones.some(m => m.id === ms.id));
-      })
-    : allMilestones;
 
   return (
     <div className="space-y-6">
@@ -55,7 +49,7 @@ export default function ManagementPage() {
         <div className="flex-1">
           <label className="block text-xs font-medium text-surface-600 mb-1">Select Milestones</label>
           <div className="flex flex-wrap gap-2">
-            {projectMilestones.map((ms) => (
+            {allMilestones.map((ms) => (
               <button
                 key={ms.id}
                 onClick={() => {

@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { cn, getStateColor, formatDate, computeDuration, computeOverallVelocity } from "@/lib/utils";
+import { cn, getStateColor, formatDate, computeDuration, computeOverallVelocity, incrementName } from "@/lib/utils";
 import { ProjectFull, ItemState, Phase, Milestone, Epic, Story, Allocation, Member } from "@/types";
 import { InlineInput } from "@/components/InlineInput";
 import { ColumnToggle, useColumnVisibility, type ColumnDef } from "@/components/ColumnToggle";
@@ -212,12 +212,7 @@ export default function ProjectDetailPage() {
   );
 }
 
-/** Increment trailing number in a name, e.g. "Phase 1" -> "Phase 2" */
-function incrementName(name: string): string {
-  const m = name.match(/^(.*?)(\d+)$/);
-  if (m) return `${m[1]}${Number(m[2]) + 1}`;
-  return `${name} 2`;
-}
+
 
 function PhaseRow({ phase, phaseIndex, totalPhases, onAddMilestone, onAddEpic, onAddStory, projectId, isVisible, members, onMilestoneActivated }: {
   phase: ProjectFull["phases"][number];
