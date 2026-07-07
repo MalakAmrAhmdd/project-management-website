@@ -1,6 +1,7 @@
 import {
   Team, TeamWithMembers, Member, Project, ProjectFull, Phase, Milestone, Epic, Story,
   Allocation, ChangeLogEntry, DashboardSummary, ResourceHealth, TimelineProject,
+  ContributionRow,
 } from "@/types";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:9001/api";
@@ -30,7 +31,7 @@ export const api = {
   // Members
   listMembers: (teamId?: number) => request<Member[]>(`/members/${teamId ? `?team_id=${teamId}` : ""}`),
   getMember: (id: number) => request<Member>(`/members/${id}`),
-  getMemberContributions: (id: number) => request<{ member_id: number; contributions: any[] }>(`/members/${id}/contributions`),
+  getMemberContributions: (id: number) => request<{ member_id: number; contributions: ContributionRow[] }>(`/members/${id}/contributions`),
   createMember: (data: Partial<Member>) => request<Member>("/members/", { method: "POST", body: JSON.stringify(data) }),
   updateMember: (id: number, data: Partial<Member>) => request<Member>(`/members/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
   deleteMember: (id: number) => request<void>(`/members/${id}`, { method: "DELETE" }),
@@ -51,7 +52,7 @@ export const api = {
   // Milestones
   listMilestones: (phaseId: number) => request<Milestone[]>(`/milestones/?phase_id=${phaseId}`),
   getMilestone: (id: number) => request<Milestone>(`/milestones/${id}`),
-  getMilestoneContributions: (id: number) => request<{ milestone_id: number; contributions: any[] }>(`/milestones/${id}/contribution-matrix`),
+  getMilestoneContributions: (id: number) => request<{ milestone_id: number; contributions: ContributionRow[] }>(`/milestones/${id}/contribution-matrix`),
   createMilestone: (data: Partial<Milestone> & { phase_id: number }) => request<Milestone>("/milestones/", { method: "POST", body: JSON.stringify(data) }),
   updateMilestone: (id: number, data: Partial<Milestone>) => request<Milestone>(`/milestones/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
   deleteMilestone: (id: number) => request<void>(`/milestones/${id}`, { method: "DELETE" }),
