@@ -114,11 +114,10 @@ async def get_milestone_contribution_matrix(
         .where(Allocation.milestone_id == milestone_id)
     )
     rows = result.all()
-
     matrix = []
     for alloc, member in rows:
         matrix.append({
-            "allocation_id": alloc.id,
+            "allocation_id": alloc.allocation_id,
             "member_id": member.id,
             "member_name": member.name,
             "member_email": member.email,
@@ -135,31 +134,28 @@ async def get_member_contribution_matrix(
     db: AsyncSession,
     member_id: int,
 ) -> List[dict]:
-    """Get all active milestone contributions for a member."""
     result = await db.execute(
-        select(Allocation, Milestone)
+        select(Allocation, Milestone, Phase, Project)
         .join(Milestone, Allocation.milestone_id == Milestone.id)
+        .join(Phase, Milestone.phase_id == Phase.id)
+        .join(Project, Phase.project_id == Project.id)
         .where(Allocation.member_id == member_id)
+        .where(Milestone.state == ItemState.ACTIVE)
     )
     rows = result.all()
-
-    matrix = []
-    for alloc, milestone in rows:
-        # Get parent phase and project for context
-        phase = await db.get(Phase, milestone.phase_id)
-        project = await db.get(Project, phase.project_id) if phase else None
-
-        matrix.append({
+    print(f">>> get_member_contribution_matrix: {len(rows)} rows found for member_id={member_id}")
+    return [
+        {
             "allocation_id": alloc.id,
             "milestone_id": milestone.id,
             "milestone_name": milestone.name,
             "milestone_state": milestone.state.value,
-            "phase_name": phase.name if phase else "",
-            "project_name": project.name if project else "",
+            "phase_name": phase.name,
+            "project_name": project.name,
             "velocity_if_100_pct": alloc.velocity_if_100_pct,
             "contribution_percentage": alloc.contribution_percentage,
             "effective_velocity": alloc.effective_velocity,
             "average_fto": alloc.average_fto,
-        })
-
-    return matrix
+        }
+        for alloc, milestone, phase, project in rows
+    ]

@@ -32,7 +32,7 @@ async def get_contributions( db: AsyncSession = Depends(get_db), member: Member 
 
     return MemberWithContributions(
         **member_data,
-        contribution_matrix=matrix
+        allocations=matrix
     )
 
 @router.post("/", response_model=MemberRead, status_code=201)
