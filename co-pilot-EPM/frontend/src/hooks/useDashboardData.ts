@@ -3,17 +3,17 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 
 export function useDashboardData() {
-  const { data: summary, isLoading: summaryLoading } = useQuery({
+  const { data: summary } = useQuery({
     queryKey: ["dashboard-summary"],
     queryFn: api.dashboardSummary,
   });
 
-  const { data: health, isLoading: healthLoading } = useQuery({
+  const { data: health } = useQuery({
     queryKey: ["resource-health"],
     queryFn: api.resourceHealth,
   });
 
-  const { data: timeline, isLoading: timelineLoading } = useQuery({
+  const { data: timeline } = useQuery({
     queryKey: ["project-timeline"],
     queryFn: api.projectTimeline,
   });
