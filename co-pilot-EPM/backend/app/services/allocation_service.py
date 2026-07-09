@@ -117,7 +117,7 @@ async def get_milestone_contribution_matrix(
     matrix = []
     for alloc, member in rows:
         matrix.append({
-            "allocation_id": alloc.allocation_id,
+            "allocation_id": alloc.id,
             "member_id": member.id,
             "member_name": member.name,
             "member_email": member.email,
