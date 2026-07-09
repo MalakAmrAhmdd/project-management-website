@@ -6,6 +6,7 @@ from typing import List
 from app.database import get_db
 from app.models import Allocation, Member, Milestone, Phase, Project
 from app.schemas.allocation import AllocationCreate, AllocationUpdate, AllocationRead, AllocationWithDetails
+from app.routers.dependencies import valid_allocation_create
 from app.services.allocation_service import (
     allocate_member,
     update_allocation as svc_update_allocation,
@@ -58,24 +59,7 @@ async def list_allocations(
 
 
 @router.post("/", response_model=AllocationRead, status_code=201)
-async def create_allocation(data: AllocationCreate, db: AsyncSession = Depends(get_db)):
-    # Verify member and milestone exist
-    member = await db.get(Member, data.member_id)
-    if not member:
-        raise HTTPException(status_code=404, detail="Member not found")
-    milestone = await db.get(Milestone, data.milestone_id)
-    if not milestone:
-        raise HTTPException(status_code=404, detail="Milestone not found")
-
-    # Check for duplicate
-    existing = await db.execute(
-        select(Allocation).where(
-            Allocation.member_id == data.member_id,
-            Allocation.milestone_id == data.milestone_id,
-        )
-    )
-    if existing.scalar_one_or_none():
-        raise HTTPException(status_code=409, detail="Allocation already exists for this member/milestone pair")
+async def create_allocation(data: AllocationCreate = Depends(valid_allocation_create), db: AsyncSession = Depends(get_db)):
 
     alloc = await allocate_member(
         db,
@@ -85,6 +69,7 @@ async def create_allocation(data: AllocationCreate, db: AsyncSession = Depends(g
         contribution_percentage=data.contribution_percentage,
         average_fto=data.average_fto,
     )
+
     return alloc
 
 
