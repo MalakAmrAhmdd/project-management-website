@@ -140,10 +140,8 @@ async def get_member_contribution_matrix(
         .join(Phase, Milestone.phase_id == Phase.id)
         .join(Project, Phase.project_id == Project.id)
         .where(Allocation.member_id == member_id)
-        .where(Milestone.state == ItemState.ACTIVE)
     )
     rows = result.all()
-    print(f">>> get_member_contribution_matrix: {len(rows)} rows found for member_id={member_id}")
     return [
         {
             "allocation_id": alloc.id,
