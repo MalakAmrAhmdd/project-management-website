@@ -15,6 +15,13 @@ export function getAllocationStatus(
   return "under";
 }
 
+/** Increment trailing number in a name, e.g. "Phase 1" -> "Phase 2" */
+export function incrementName(name: string): string {
+  const m = name.match(/^(.*?)(\d+)$/);
+  if (m) return `${m[1]}${Number(m[2]) + 1}`;
+  return `${name} 2`;
+}
+
 export function getAllocationColor(pct: number): string {
   const status = getAllocationStatus(pct);
   switch (status) {
