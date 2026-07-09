@@ -44,7 +44,7 @@ class AllocationBrief(BaseModel):
 
 
 class MemberWithContributions(MemberRead):
-    allocations: List[AllocationBrief] = []
+    contributions: List[AllocationBrief] = []
 
 
 from app.schemas.allocation import AllocationRead  # noqa: E402
