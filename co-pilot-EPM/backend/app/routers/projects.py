@@ -4,8 +4,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from typing import List
 
+from app.routers.dependencies import get_project_or_404
 from app.database import get_db
-from app.models import Project, Phase, Milestone, Epic, Story
+from app.models import Project, Phase, Milestone, Epic
 from app.schemas.project import (
     ProjectCreate, ProjectUpdate, ProjectRead, ProjectFull,
 )
@@ -23,7 +24,7 @@ async def list_projects(db: AsyncSession = Depends(get_db)):
 
 @router.get("/{project_id}", response_model=ProjectFull)
 async def get_project(project_id: int, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
+    statement = (
         select(Project)
         .options(
             selectinload(Project.phases)
@@ -33,6 +34,7 @@ async def get_project(project_id: int, db: AsyncSession = Depends(get_db)):
         )
         .where(Project.id == project_id)
     )
+    result = await db.execute(statement)
     project = result.scalar_one_or_none()
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -52,9 +54,7 @@ async def create_project(data: ProjectCreate, db: AsyncSession = Depends(get_db)
 
 @router.patch("/{project_id}", response_model=ProjectRead)
 async def update_project(project_id: int, data: ProjectUpdate, db: AsyncSession = Depends(get_db)):
-    project = await db.get(Project, project_id)
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
+    project = await get_project_or_404(project_id, db)
 
     updates = data.model_dump(exclude_unset=True)
     for key, value in updates.items():
@@ -71,7 +71,5 @@ async def update_project(project_id: int, data: ProjectUpdate, db: AsyncSession 
 
 @router.delete("/{project_id}", status_code=204)
 async def delete_project(project_id: int, db: AsyncSession = Depends(get_db)):
-    project = await db.get(Project, project_id)
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
+    project = await get_project_or_404(project_id, db)
     await db.delete(project)

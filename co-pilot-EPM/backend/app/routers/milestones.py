@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
-from datetime import timedelta
 
 from app.database import get_db
 from app.models import Milestone, Phase, Epic, Story
@@ -11,8 +10,10 @@ from app.services.placeholder_service import consume_or_expand_milestone, fill_m
 from app.services.reorder_service import insert_at_position, normalize_order
 from app.services.calculation_engine import cascade_recalculate_from_milestone
 from app.services.allocation_service import get_milestone_contribution_matrix
-
+from app.routers.dependencies import get_phase_or_404 , get_milestone_or_404
 router = APIRouter()
+
+
 
 
 @router.get("/", response_model=List[MilestoneRead])
@@ -25,26 +26,19 @@ async def list_milestones(phase_id: int, db: AsyncSession = Depends(get_db)):
 
 @router.get("/{milestone_id}", response_model=MilestoneRead)
 async def get_milestone(milestone_id: int, db: AsyncSession = Depends(get_db)):
-    ms = await db.get(Milestone, milestone_id)
-    if not ms:
-        raise HTTPException(status_code=404, detail="Milestone not found")
-    return ms
+    return await get_milestone_or_404(milestone_id, db)
 
 
 @router.get("/{milestone_id}/contribution-matrix")
 async def milestone_contribution_matrix(milestone_id: int, db: AsyncSession = Depends(get_db)):
-    ms = await db.get(Milestone, milestone_id)
-    if not ms:
-        raise HTTPException(status_code=404, detail="Milestone not found")
+    await get_milestone_or_404(milestone_id, db)
     matrix = await get_milestone_contribution_matrix(db, milestone_id)
     return {"milestone_id": milestone_id, "contributions": matrix}
 
 
 @router.post("/", response_model=MilestoneRead, status_code=201)
 async def create_milestone(data: MilestoneCreate, db: AsyncSession = Depends(get_db)):
-    phase = await db.get(Phase, data.phase_id)
-    if not phase:
-        raise HTTPException(status_code=404, detail="Phase not found")
+    phase = await get_phase_or_404(data.phase_id, db)
 
     ms_data = data.model_dump(exclude={"phase_id", "order_index"})
     ms_data["state"] = ms_data["state"].value if hasattr(ms_data["state"], "value") else ms_data["state"]
@@ -70,9 +64,7 @@ async def create_milestone(data: MilestoneCreate, db: AsyncSession = Depends(get
 
 @router.patch("/{milestone_id}", response_model=MilestoneRead)
 async def update_milestone(milestone_id: int, data: MilestoneUpdate, db: AsyncSession = Depends(get_db)):
-    ms = await db.get(Milestone, milestone_id)
-    if not ms:
-        raise HTTPException(status_code=404, detail="Milestone not found")
+    ms = await get_milestone_or_404(milestone_id, db)
 
     updates = data.model_dump(exclude_unset=True)
 
@@ -128,9 +120,7 @@ async def update_milestone(milestone_id: int, data: MilestoneUpdate, db: AsyncSe
 
 @router.delete("/{milestone_id}", status_code=204)
 async def delete_milestone(milestone_id: int, db: AsyncSession = Depends(get_db)):
-    ms = await db.get(Milestone, milestone_id)
-    if not ms:
-        raise HTTPException(status_code=404, detail="Milestone not found")
+    ms = await get_milestone_or_404(milestone_id, db)
     phase_id = ms.phase_id
     await db.delete(ms)
     await db.flush()

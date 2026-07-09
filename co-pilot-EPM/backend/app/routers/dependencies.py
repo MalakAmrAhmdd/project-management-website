@@ -6,6 +6,9 @@ from app.models.member import Member
 from app.models.team import Team
 from app.models.milestone import Milestone
 from app.models.allocation import Allocation
+from app.models.phase import Phase
+from app.models.story import Story
+from app.models.project import Project
 from app.schemas.allocation import AllocationCreate, AllocationUpdate
 from app.services.allocation_service import update_allocation 
 
@@ -60,3 +63,31 @@ async def get_allocation_or_404(allocation_id: int, data: AllocationUpdate,
             raise HTTPException(status_code=404, detail="Allocation not found")
 
     return alloc
+
+async def get_milestone_or_404(milestone_id: int, db: AsyncSession) -> Milestone:
+    milestone = await db.get(Milestone, milestone_id)
+    if not milestone:
+        raise HTTPException(status_code=404, detail="Milestone not found")
+    return milestone
+
+
+async def get_phase_or_404(phase_id: int, db: AsyncSession = Depends(get_db)) -> Phase:
+    phase = await db.get(Phase, phase_id)
+    if not phase:
+        raise HTTPException(status_code=404, detail="Phase not found")
+    return phase
+
+async def get_story_or_404(story_id: int, db: AsyncSession = Depends(get_db)) -> Story:
+    story = await db.get(Story, story_id)
+    if not story:
+        raise HTTPException(status_code=404, detail="Story not found")
+    return story
+
+
+
+
+async def get_project_or_404(project_id: int, db: AsyncSession) -> Project:
+    project = await db.get(Project, project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return project
