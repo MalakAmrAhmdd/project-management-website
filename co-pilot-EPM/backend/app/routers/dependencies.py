@@ -64,7 +64,7 @@ async def get_allocation_or_404(allocation_id: int, data: AllocationUpdate,
 
     return alloc
 
-async def get_milestone_or_404(milestone_id: int, db: AsyncSession) -> Milestone:
+async def get_milestone_or_404(milestone_id: int, db: AsyncSession = Depends(get_db)) -> Milestone:
     milestone = await db.get(Milestone, milestone_id)
     if not milestone:
         raise HTTPException(status_code=404, detail="Milestone not found")
@@ -84,9 +84,7 @@ async def get_story_or_404(story_id: int, db: AsyncSession = Depends(get_db)) ->
     return story
 
 
-
-
-async def get_project_or_404(project_id: int, db: AsyncSession) -> Project:
+async def get_project_or_404(project_id: int, db: AsyncSession = Depends(get_db)) -> Project:
     project = await db.get(Project, project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
