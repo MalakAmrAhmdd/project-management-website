@@ -2,19 +2,16 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
-
 from app.database import get_db
 from app.models import Allocation, Member, Milestone, Phase, Project
-from app.schemas.allocation import AllocationCreate, AllocationUpdate, AllocationRead, AllocationWithDetails
-from app.routers.dependencies import valid_allocation_create
+from app.schemas.allocation import AllocationCreate, AllocationRead, AllocationWithDetails
+from app.routers.dependencies import get_allocation_or_404, valid_allocation_create
 from app.services.allocation_service import (
     allocate_member,
-    update_allocation as svc_update_allocation,
     remove_allocation,
 )
 
 router = APIRouter()
-
 
 @router.get("/", response_model=List[AllocationWithDetails])
 async def list_allocations(
@@ -68,22 +65,11 @@ async def create_allocation(data: AllocationCreate = Depends(valid_allocation_cr
         contribution_percentage=data.contribution_percentage,
         average_fto=data.average_fto,
     )
-
     return alloc
-
 
 @router.patch("/{allocation_id}", response_model=AllocationRead)
-async def update_alloc(allocation_id: int, data: AllocationUpdate, db: AsyncSession = Depends(get_db)):
-    alloc = await svc_update_allocation(
-        db,
-        allocation_id=allocation_id,
-        velocity_if_100_pct=data.velocity_if_100_pct,
-        contribution_percentage=data.contribution_percentage,
-        average_fto=data.average_fto,
-    )
-    if not alloc:
-        raise HTTPException(status_code=404, detail="Allocation not found")
-    return alloc
+async def update_alloc(allocation: Allocation = Depends(get_allocation_or_404), db: AsyncSession = Depends(get_db)):
+    return allocation
 
 
 @router.delete("/{allocation_id}", status_code=204)
