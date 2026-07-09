@@ -23,23 +23,21 @@ async def list_allocations(
     db: AsyncSession = Depends(get_db),
 ):
     q = (
-        select(Allocation, Member, Milestone)
+        select(Allocation, Member, Milestone, Phase, Project)
         .join(Member, Allocation.member_id == Member.id)
         .join(Milestone, Allocation.milestone_id == Milestone.id)
+        .join(Phase, Milestone.phase_id == Phase.id)
+        .join(Project, Phase.project_id == Project.id)
     )
     if milestone_id is not None:
         q = q.where(Allocation.milestone_id == milestone_id)
     if member_id is not None:
         q = q.where(Allocation.member_id == member_id)
 
-    result = await db.execute(q)
-    rows = result.all()
+    rows = (await db.execute(q)).all()
 
-    allocations = []
-    for alloc, member, milestone in rows:
-        phase = await db.get(Phase, milestone.phase_id)
-        project = await db.get(Project, phase.project_id) if phase else None
-        allocations.append(AllocationWithDetails(
+    return [
+        AllocationWithDetails(
             id=alloc.id,
             member_id=alloc.member_id,
             milestone_id=alloc.milestone_id,
@@ -52,10 +50,11 @@ async def list_allocations(
             member_name=member.name,
             member_email=member.email,
             milestone_name=milestone.name,
-            phase_name=phase.name if phase else None,
-            project_name=project.name if project else None,
-        ))
-    return allocations
+            phase_name=phase.name,
+            project_name=project.name,
+        )
+        for alloc, member, milestone, phase, project in rows
+    ]
 
 
 @router.post("/", response_model=AllocationRead, status_code=201)
