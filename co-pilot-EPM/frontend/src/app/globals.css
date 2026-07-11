@@ -52,12 +52,24 @@
 .gantt-bar {
   @apply rounded-md h-6 relative overflow-hidden;
 }
-.gantt-bar-active { @apply bg-blue-500; }
-.gantt-bar-completed { @apply bg-green-500; }
-.gantt-bar-onhold { @apply bg-orange-400; }
-.gantt-bar-pending { @apply bg-yellow-400; }
-.gantt-bar-notstarted { @apply bg-gray-300; }
-.gantt-bar-placeholder { @apply bg-gray-200 border-2 border-dashed border-gray-400; }
+.gantt-bar-active {
+  @apply bg-blue-500;
+}
+.gantt-bar-completed {
+  @apply bg-green-500;
+}
+.gantt-bar-onhold {
+  @apply bg-orange-400;
+}
+.gantt-bar-pending {
+  @apply bg-yellow-400;
+}
+.gantt-bar-notstarted {
+  @apply bg-gray-300;
+}
+.gantt-bar-placeholder {
+  @apply bg-gray-200 border-2 border-dashed border-gray-400;
+}
 
 /* Placeholder rows */
 .row-placeholder {
@@ -65,7 +77,16 @@
 }
 
 /* Scrollbar styling */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { @apply bg-surface-100; }
-::-webkit-scrollbar-thumb { @apply bg-surface-300 rounded-full; }
-::-webkit-scrollbar-thumb:hover { @apply bg-surface-400; }
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-surface-100;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-surface-300 rounded-full;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-surface-400;
+}

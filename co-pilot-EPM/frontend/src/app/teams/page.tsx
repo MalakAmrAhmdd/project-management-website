@@ -1,56 +1,53 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
-import { Team } from "@/types";
 import { InlineInput } from "@/components/InlineInput";
-import {
-  Plus, Trash2, Users, ChevronRight, FolderKanban,
-} from "lucide-react";
+import { Plus, Trash2, Users, ChevronRight, FolderKanban } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import toast from "react-hot-toast";
+import { useTeamsData } from "@/hooks/useTeamsData";
 
 export default function TeamsPage() {
-  const qc = useQueryClient();
-  const { data: teams = [], isLoading } = useQuery({ queryKey: ["teams"], queryFn: api.listTeams });
-  const { data: members = [] } = useQuery({ queryKey: ["members"], queryFn: () => api.listMembers() });
-  const { data: projects = [] } = useQuery({ queryKey: ["projects"], queryFn: api.listProjects });
   const [addingTeam, setAddingTeam] = useState(false);
   const [newName, setNewName] = useState("");
   const [newDesc, setNewDesc] = useState("");
 
-  const createTeam = useMutation({
-    mutationFn: api.createTeam,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["teams"] });
-      toast.success("Team created");
-      setAddingTeam(false);
-      setNewName("");
-      setNewDesc("");
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
+  const {
+    teams,
+    isLoading,
+    createTeam,
+    updateTeam,
+    deleteTeam,
+    memberCountByTeam,
+    projectCountByTeam,
+  } = useTeamsData();
 
-  const updateTeam = useMutation({
-    mutationFn: ({ id, ...data }: { id: number } & Partial<Team>) => api.updateTeam(id, data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["teams"] }); toast.success("Team updated"); },
-    onError: (e: Error) => toast.error(e.message),
-  });
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && newName.trim())
+      createTeam.mutate(
+        { name: newName, description: newDesc },
+        {
+          onSuccess: () => {
+            setAddingTeam(false);
+            setNewName("");
+            setNewDesc("");
+          },
+        },
+      );
+    if (e.key === "Escape") setAddingTeam(false);
+  };
 
-  const deleteTeam = useMutation({
-    mutationFn: api.deleteTeam,
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["teams"] }); toast.success("Team deleted"); },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const memberCountByTeam = (teamId: number) => members.filter((m) => m.team_id === teamId).length;
-  const projectCountByTeam = (teamId: number) => projects.filter((p) => p.team_id === teamId).length;
-
-   if (isLoading) {
+  if (isLoading) {
     return (
-      <div className="flex justify-center py-10">
-        Loading teams now please wait ....
+      <div className="space-y-6">
+        <div className="h-8 w-32 bg-surface-200 rounded animate-pulse" />
+        <div className="card overflow-hidden">
+          {[...Array(4)].map((_, i) => (
+            <div
+              key={i}
+              className="h-14 border-b border-surface-100 bg-surface-50 animate-pulse"
+            />
+          ))}
+        </div>
       </div>
     );
   }
@@ -60,7 +57,9 @@ export default function TeamsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-surface-900">Teams</h1>
-          <p className="text-surface-500 text-sm mt-1">Manage teams and their members</p>
+          <p className="text-surface-500 text-sm mt-1">
+            Manage teams and their members
+          </p>
         </div>
         <button onClick={() => setAddingTeam(true)} className="btn-primary">
           <Plus className="w-4 h-4" /> New Team
@@ -72,11 +71,21 @@ export default function TeamsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-surface-50 border-b border-surface-200">
-                <th className="text-left px-4 py-3 font-semibold text-surface-600 w-[280px]">Team Name</th>
-                <th className="text-left px-4 py-3 font-semibold text-surface-600">Description</th>
-                <th className="text-center px-4 py-3 font-semibold text-surface-600 w-28">Members</th>
-                <th className="text-center px-4 py-3 font-semibold text-surface-600 w-28">Projects</th>
-                <th className="text-center px-4 py-3 font-semibold text-surface-600 w-28">Actions</th>
+                <th className="text-left px-4 py-3 font-semibold text-surface-600 w-[280px]">
+                  Team Name
+                </th>
+                <th className="text-left px-4 py-3 font-semibold text-surface-600">
+                  Description
+                </th>
+                <th className="text-center px-4 py-3 font-semibold text-surface-600 w-28">
+                  Members
+                </th>
+                <th className="text-center px-4 py-3 font-semibold text-surface-600 w-28">
+                  Projects
+                </th>
+                <th className="text-center px-4 py-3 font-semibold text-surface-600 w-28">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -89,10 +98,7 @@ export default function TeamsPage() {
                       onChange={(e) => setNewName(e.target.value)}
                       placeholder="Team name"
                       className="input py-1 text-sm"
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && newName.trim()) createTeam.mutate({ name: newName, description: newDesc });
-                        if (e.key === "Escape") setAddingTeam(false);
-                      }}
+                      onKeyDown={handleKeyDown}
                     />
                   </td>
                   <td className="px-4 py-2">
@@ -101,26 +107,45 @@ export default function TeamsPage() {
                       onChange={(e) => setNewDesc(e.target.value)}
                       placeholder="Description"
                       className="input py-1 text-sm"
+                      onKeyDown={handleKeyDown}
                     />
                   </td>
                   <td></td>
                   <td></td>
                   <td className="px-4 py-2 text-center space-x-2">
                     <button
-                      onClick={() => { if (newName.trim()) createTeam.mutate({ name: newName, description: newDesc }); }}
+                      onClick={() => {
+                        if (newName.trim())
+                          createTeam.mutate({
+                            name: newName,
+                            description: newDesc,
+                          });
+                      }}
                       className="btn-primary text-xs py-1 px-3"
-                    >Save</button>
-                    <button onClick={() => setAddingTeam(false)} className="btn-secondary text-xs py-1 px-3">Cancel</button>
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => setAddingTeam(false)}
+                      className="btn-secondary text-xs py-1 px-3"
+                    >
+                      Cancel
+                    </button>
                   </td>
                 </tr>
               )}
               {teams.map((team) => (
-                <tr key={team.id} className="border-b border-surface-100 hover:bg-surface-50 group">
+                <tr
+                  key={team.id}
+                  className="border-b border-surface-100 hover:bg-surface-50 group"
+                >
                   <td className="px-4 py-2">
                     <div className="flex items-center gap-2">
                       <InlineInput
                         value={team.name}
-                        onSave={(v) => updateTeam.mutate({ id: team.id, name: v })}
+                        onSave={(v) =>
+                          updateTeam.mutate({ id: team.id, name: v })
+                        }
                         className="font-semibold"
                       />
                     </div>
@@ -128,7 +153,9 @@ export default function TeamsPage() {
                   <td className="px-4 py-2">
                     <InlineInput
                       value={team.description}
-                      onSave={(v) => updateTeam.mutate({ id: team.id, description: v })}
+                      onSave={(v) =>
+                        updateTeam.mutate({ id: team.id, description: v })
+                      }
                       placeholder="No description"
                     />
                   </td>
@@ -154,7 +181,10 @@ export default function TeamsPage() {
                         <ChevronRight className="w-4 h-4" />
                       </Link>
                       <button
-                        onClick={() => { if (confirm(`Delete team "${team.name}"?`)) deleteTeam.mutate(team.id); }}
+                        onClick={() => {
+                          if (confirm(`Delete team "${team.name}"?`))
+                            deleteTeam.mutate(team.id);
+                        }}
                         className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 p-1"
                         title="Delete team"
                       >
@@ -166,7 +196,10 @@ export default function TeamsPage() {
               ))}
               {teams.length === 0 && !addingTeam && !isLoading && (
                 <tr>
-                  <td colSpan={5} className="text-center py-12 text-surface-400">
+                  <td
+                    colSpan={5}
+                    className="text-center py-12 text-surface-400"
+                  >
                     No teams yet. Create one to get started.
                   </td>
                 </tr>

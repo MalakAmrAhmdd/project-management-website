@@ -16,9 +16,7 @@ export default function ManagementPage() {
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
   const [selectedMilestones, setSelectedMilestones] = useState<number[]>([]);
   const [tab, setTab] = useState<"milestone" | "timeline" | "changelog">("milestone");
-
   const { projects, timeline, members, allMilestones } = useManagementData(selectedProjectId);
-
 
   return (
     <div className="space-y-6">

@@ -8,7 +8,7 @@ import { ProjectFull, ItemState, Phase, Milestone, Member } from "@/types";
 import { InlineInput } from "@/components/InlineInput";
 import { ChevronDown, ChevronRight, Plus, Trash2, ArrowUp, ArrowDown, Layers } from "lucide-react";
 import toast from "react-hot-toast";
-import { TODAY, STATES, canActivate } from "@/lib/projectDetails";
+import { TODAY, STATES, canActivate } from "@/lib/constants";
 import { MilestoneRow } from "./MilestoneRow";
 
 interface PhaseRowProps {

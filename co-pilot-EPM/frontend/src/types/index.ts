@@ -200,3 +200,22 @@ export interface ContributionRow {
   effective_velocity: number;
   average_fto: number;
 }
+
+export interface StatCardProps {
+  label: string;
+  value: string | number;
+  highlight?: boolean;
+  accent?: boolean;
+}
+
+export interface ProjectCardProps {
+  project: Project;
+  teamName?: string;
+  onDelete: (id: number) => void;
+}
+
+export interface CreateProjectFormProps {
+  teams: Team[];
+  onSave: (data: any) => void;
+  onCancel: () => void;
+}

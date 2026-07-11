@@ -4,9 +4,9 @@ import { useState} from "react";
 import { ColumnToggle, useColumnVisibility } from "@/components/ColumnToggle";
 import { Plus, Search } from "lucide-react";
 import { RESOURCE_COLUMNS } from "@/lib/constants";
-import { useResourcesData } from "@/hooks/useResourceData";
-import { NewMemberRow } from "@/components/Resources/NewMemberRow";
-import { MemberRow } from "@/components/Resources/MemberRow";
+import { useResourcesData } from "@/hooks/useResourcesData";
+import { NewMemberRow } from "@/components/NewMemberRow";
+import { MemberRow } from "@/components/MemberRow";
 
 export default function ResourcesPage() {
   const [search, setSearch] = useState("");

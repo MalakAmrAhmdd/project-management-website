@@ -18,7 +18,7 @@ export interface TeamCardProps {
   className?: string;
 }
 
-function TeamCard({
+export function TeamCard({
   id,
   name,
   description,

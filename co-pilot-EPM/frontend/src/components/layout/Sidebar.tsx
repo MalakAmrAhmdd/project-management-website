@@ -4,23 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
-  LayoutDashboard,
-  FolderKanban,
-  Users,
-  Users2,
-  Settings2,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
 import { useState } from "react";
+import { links } from "@/lib/constants";
 
-const links = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/teams", label: "Teams", icon: Users2 },
-  { href: "/resources", label: "Resources", icon: Users },
-  { href: "/projects", label: "Projects", icon: FolderKanban },
-  { href: "/management", label: "Management", icon: Settings2 },
-];
 
 export default function Sidebar() {
   const pathname = usePathname();
