@@ -81,7 +81,7 @@ export function PhaseRow({ phase, phaseIndex, totalPhases, onAddMilestone, onAdd
             <select value={phase.state} onChange={(e) => {
               const next = e.target.value as ItemState;
               if (next === "ACTIVE") {
-                const err = canActivate(startDate, phase.adaptive_end_date);
+                const err = canActivate(startDate || phase.original_start_date, endDate || phase.original_end_date);
                 if (err) { toast.error(`Cannot set to ACTIVE: ${err}`); return; }
               }
               updatePhase.mutate({ id: phase.id, state: next });

@@ -69,7 +69,7 @@ export function MilestoneRow({ milestone: ms, msIndex, totalMs, onAddEpic, onAdd
             <select value={ms.state} onChange={(e) => {
               const next = e.target.value as ItemState;
               if (next === "ACTIVE") {
-                const err = canActivate(startDate, ms.adaptive_end_date);
+                const err = canActivate(startDate || ms.original_start_date, endDate || ms.original_end_date);
                 if (err) { toast.error(`Cannot set to ACTIVE: ${err}`); return; }
               }
               updateMs.mutate(
