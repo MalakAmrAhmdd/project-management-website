@@ -25,15 +25,14 @@ async def list_milestones(phase_id: int, db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/{milestone_id}", response_model=MilestoneRead)
-async def get_milestone(milestone_id: int, db: AsyncSession = Depends(get_db)):
-    return await get_milestone_or_404(milestone_id, db)
+async def get_milestone(milestone: Milestone = Depends(get_milestone_or_404)):
+    return milestone
 
 
 @router.get("/{milestone_id}/contribution-matrix")
-async def milestone_contribution_matrix(milestone_id: int, db: AsyncSession = Depends(get_db)):
-    await get_milestone_or_404(milestone_id, db)
-    matrix = await get_milestone_contribution_matrix(db, milestone_id)
-    return {"milestone_id": milestone_id, "contributions": matrix}
+async def milestone_contribution_matrix(milestone: Milestone = Depends(get_milestone_or_404), db: AsyncSession = Depends(get_db)):
+    matrix = await get_milestone_contribution_matrix(db, milestone.id)
+    return {"milestone_id": milestone.id, "contributions": matrix}
 
 
 @router.post("/", response_model=MilestoneRead, status_code=201)
@@ -63,9 +62,7 @@ async def create_milestone(data: MilestoneCreate, db: AsyncSession = Depends(get
 
 
 @router.patch("/{milestone_id}", response_model=MilestoneRead)
-async def update_milestone(milestone_id: int, data: MilestoneUpdate, db: AsyncSession = Depends(get_db)):
-    ms = await get_milestone_or_404(milestone_id, db)
-
+async def update_milestone(milestone: Milestone = Depends(get_milestone_or_404), data: MilestoneUpdate = None, db: AsyncSession = Depends(get_db)):
     updates = data.model_dump(exclude_unset=True)
 
     # When total_estimated_points is set directly on the milestone, store it in
@@ -76,7 +73,7 @@ async def update_milestone(milestone_id: int, data: MilestoneUpdate, db: AsyncSe
         # Find the existing non-gap placeholder epic under this milestone
         ep_result = await db.execute(
             select(Epic).where(
-                Epic.milestone_id == milestone_id,
+                Epic.milestone_id == milestone.id,
                 Epic.is_placeholder == True,
                 Epic.name != "Epic (Gap Placeholder)",
             ).order_by(Epic.order_index).limit(1)
@@ -88,7 +85,7 @@ async def update_milestone(milestone_id: int, data: MilestoneUpdate, db: AsyncSe
             # No placeholder epic — create one to hold the budget
             new_epic = Epic(
                 name="Epic 1 (Placeholder)",
-                milestone_id=milestone_id,
+                milestone_id=milestone.id,
                 order_index=0,
                 is_placeholder=True,
                 total_estimated_points=target_points,
@@ -105,23 +102,22 @@ async def update_milestone(milestone_id: int, data: MilestoneUpdate, db: AsyncSe
             await db.flush()
 
     for key, value in updates.items():
-        setattr(ms, key, value)
+        setattr(milestone, key, value)
 
     if "order_index" in updates:
-        await insert_at_position(db, "milestone", ms.phase_id, updates["order_index"], ms.id)
-        await normalize_order(db, "milestone", ms.phase_id)
+        await insert_at_position(db, "milestone", milestone.phase_id, updates["order_index"], milestone.id)
+        await normalize_order(db, "milestone", milestone.phase_id)
 
-    await cascade_recalculate_from_milestone(db, ms.id, reason="Milestone updated")
-    await fill_milestone_gaps(db, ms.phase_id)
+    await cascade_recalculate_from_milestone(db, milestone.id, reason="Milestone updated")
+    await fill_milestone_gaps(db, milestone.phase_id)
     await db.flush()
-    await db.refresh(ms)
-    return ms
+    await db.refresh(milestone)
+    return milestone
 
 
 @router.delete("/{milestone_id}", status_code=204)
-async def delete_milestone(milestone_id: int, db: AsyncSession = Depends(get_db)):
-    ms = await get_milestone_or_404(milestone_id, db)
-    phase_id = ms.phase_id
-    await db.delete(ms)
+async def delete_milestone(milestone: Milestone = Depends(get_milestone_or_404), db: AsyncSession = Depends(get_db)):
+    phase_id = milestone.phase_id
+    await db.delete(milestone)
     await db.flush()
     await normalize_order(db, "milestone", phase_id)

@@ -6,7 +6,7 @@ from typing import List
 
 from app.routers.dependencies import get_project_or_404
 from app.database import get_db
-from app.models import Project, Phase, Milestone, Epic
+from app.models import Project, Phase, Milestone, Epic, Team
 from app.schemas.project import (
     ProjectCreate, ProjectUpdate, ProjectRead, ProjectFull,
 )
@@ -53,16 +53,14 @@ async def create_project(data: ProjectCreate, db: AsyncSession = Depends(get_db)
 
 
 @router.patch("/{project_id}", response_model=ProjectRead)
-async def update_project(project_id: int, data: ProjectUpdate, db: AsyncSession = Depends(get_db)):
-    project = await get_project_or_404(project_id, db)
-
+async def update_project(project: Project = Depends(get_project_or_404), data: ProjectUpdate = None, db: AsyncSession = Depends(get_db)):
     updates = data.model_dump(exclude_unset=True)
     for key, value in updates.items():
         setattr(project, key, value)
 
     # If state or points changed, recalculate
     if "total_estimated_points" in updates or "state" in updates:
-        await cascade_recalculate_from_project(db, project_id, reason="Project fields updated")
+        await cascade_recalculate_from_project(db, project.id, reason="Project fields updated")
 
     await db.flush()
     await db.refresh(project)
@@ -70,6 +68,5 @@ async def update_project(project_id: int, data: ProjectUpdate, db: AsyncSession 
 
 
 @router.delete("/{project_id}", status_code=204)
-async def delete_project(project_id: int, db: AsyncSession = Depends(get_db)):
-    project = await get_project_or_404(project_id, db)
+async def delete_project(project: Project = Depends(get_project_or_404), db: AsyncSession = Depends(get_db)):
     await db.delete(project)
