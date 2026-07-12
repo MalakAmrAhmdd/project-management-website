@@ -6,8 +6,9 @@ import { api } from "@/lib/api";
 import { cn, getStateColor, formatDate, computeDuration, computeOverallVelocity } from "@/lib/utils";
 import { ProjectFull, Epic } from "@/types";
 import { InlineInput } from "@/components/InlineInput";
-import { ChevronDown, ChevronRight, Plus, BookOpen } from "lucide-react";
+import { ChevronDown, ChevronRight, Plus, BookOpen, Trash2 } from "lucide-react";
 import { StoryRow } from "./StoryRow";
+import { toast } from "react-hot-toast";
 
 interface EpicRowProps {
   epic: ProjectFull["phases"][number]["milestones"][number]["epics"][number];
@@ -27,6 +28,11 @@ export function EpicRow({ epic, onAddStory, projectId, isVisible }: EpicRowProps
 
   const startDate = epic.actual_start_date || epic.original_start_date;
   const endDate = epic.adaptive_end_date || epic.original_end_date;
+
+  const deleteEpic = useMutation({
+    mutationFn: api.deleteEpic,
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["project", projectId] }); toast.success("Epic deleted"); },
+  });
 
   return (
     <>
@@ -59,6 +65,10 @@ export function EpicRow({ epic, onAddStory, projectId, isVisible }: EpicRowProps
           <td className="px-3 py-1 text-center">
             <button onClick={onAddStory} className="opacity-0 group-hover:opacity-100 text-purple-500 hover:text-purple-700 p-1" title="Add Story">
               <Plus className="w-3 h-3" />
+            </button>
+            <button onClick={() => { if (confirm("Delete this epic?")) deleteEpic.mutate(epic.id); }}
+              className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 p-0.5">
+              <Trash2 className="w-3 h-3" />
             </button>
           </td>
         )}
