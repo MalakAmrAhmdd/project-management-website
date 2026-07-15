@@ -6,6 +6,7 @@ from typing import List
 from app.database import get_db
 from app.models import Epic, Milestone, Story
 from app.schemas.project import EpicCreate, EpicUpdate, EpicRead, EpicWithStories
+from app.routers.dependencies import get_epic_or_404
 from app.services.placeholder_service import consume_or_expand_epic
 from app.services.reorder_service import insert_at_position, normalize_order
 from app.services.calculation_engine import cascade_recalculate_from_milestone
@@ -22,12 +23,8 @@ async def list_epics(milestone_id: int, db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/{epic_id}", response_model=EpicRead)
-async def get_epic(epic_id: int, db: AsyncSession = Depends(get_db)):
-    epic = await db.get(Epic, epic_id)
-    if not epic:
-        raise HTTPException(status_code=404, detail="Epic not found")
+async def get_epic(epic = Depends(get_epic_or_404)):
     return epic
-
 
 @router.post("/", response_model=EpicRead, status_code=201)
 async def create_epic(data: EpicCreate, db: AsyncSession = Depends(get_db)):
@@ -57,11 +54,8 @@ async def create_epic(data: EpicCreate, db: AsyncSession = Depends(get_db)):
 
 
 @router.patch("/{epic_id}", response_model=EpicRead)
-async def update_epic(epic_id: int, data: EpicUpdate, db: AsyncSession = Depends(get_db)):
-    epic = await db.get(Epic, epic_id)
-    if not epic:
-        raise HTTPException(status_code=404, detail="Epic not found")
-
+async def update_epic( data: EpicUpdate, db: AsyncSession = Depends(get_db), epic = Depends(get_epic_or_404)):
+    
     updates = data.model_dump(exclude_unset=True)
     for key, value in updates.items():
         setattr(epic, key, value)
@@ -77,10 +71,7 @@ async def update_epic(epic_id: int, data: EpicUpdate, db: AsyncSession = Depends
 
 
 @router.delete("/{epic_id}", status_code=204)
-async def delete_epic(epic_id: int, db: AsyncSession = Depends(get_db)):
-    epic = await db.get(Epic, epic_id)
-    if not epic:
-        raise HTTPException(status_code=404, detail="Epic not found")
+async def delete_epic(epic = Depends(get_epic_or_404), db: AsyncSession = Depends(get_db)):
     milestone_id = epic.milestone_id
     await db.delete(epic)
     await db.flush()

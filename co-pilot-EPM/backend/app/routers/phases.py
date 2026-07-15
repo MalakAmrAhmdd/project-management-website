@@ -9,6 +9,7 @@ from app.schemas.project import PhaseCreate, PhaseUpdate, PhaseRead
 from app.services.placeholder_service import consume_or_expand_phase
 from app.services.reorder_service import insert_at_position, normalize_order
 from app.services.calculation_engine import cascade_recalculate_from_phase
+from app.routers.dependencies import get_phase_or_404, get_project_or_404
 
 router = APIRouter()
 
@@ -22,19 +23,13 @@ async def list_phases(project_id: int, db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/{phase_id}", response_model=PhaseRead)
-async def get_phase(phase_id: int, db: AsyncSession = Depends(get_db)):
-    phase = await db.get(Phase, phase_id)
-    if not phase:
-        raise HTTPException(status_code=404, detail="Phase not found")
+async def get_phase(phase: Phase = Depends(get_phase_or_404)):
     return phase
 
 
 @router.post("/", response_model=PhaseRead, status_code=201)
-async def create_phase(data: PhaseCreate, db: AsyncSession = Depends(get_db)):
+async def create_phase(data: PhaseCreate, db: AsyncSession = Depends(get_db), project: Project = Depends(get_project_or_404)):
     # Verify parent exists
-    project = await db.get(Project, data.project_id)
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
 
     phase_data = data.model_dump(exclude={"project_id", "order_index"})
     phase_data["state"] = phase_data["state"].value if hasattr(phase_data["state"], "value") else phase_data["state"]
@@ -59,11 +54,7 @@ async def create_phase(data: PhaseCreate, db: AsyncSession = Depends(get_db)):
 
 
 @router.patch("/{phase_id}", response_model=PhaseRead)
-async def update_phase(phase_id: int, data: PhaseUpdate, db: AsyncSession = Depends(get_db)):
-    phase = await db.get(Phase, phase_id)
-    if not phase:
-        raise HTTPException(status_code=404, detail="Phase not found")
-
+async def update_phase(phase: Phase = Depends(get_phase_or_404), data: PhaseUpdate = None, db: AsyncSession = Depends(get_db)):
     updates = data.model_dump(exclude_unset=True)
     for key, value in updates.items():
         setattr(phase, key, value)
@@ -79,10 +70,7 @@ async def update_phase(phase_id: int, data: PhaseUpdate, db: AsyncSession = Depe
 
 
 @router.delete("/{phase_id}", status_code=204)
-async def delete_phase(phase_id: int, db: AsyncSession = Depends(get_db)):
-    phase = await db.get(Phase, phase_id)
-    if not phase:
-        raise HTTPException(status_code=404, detail="Phase not found")
+async def delete_phase(phase: Phase = Depends(get_phase_or_404), db: AsyncSession = Depends(get_db)):
     project_id = phase.project_id
     await db.delete(phase)
     await db.flush()

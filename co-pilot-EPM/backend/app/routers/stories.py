@@ -9,6 +9,7 @@ from app.schemas.project import StoryCreate, StoryUpdate, StoryRead
 from app.services.placeholder_service import consume_or_expand_story
 from app.services.reorder_service import insert_at_position, normalize_order
 from app.services.calculation_engine import cascade_recalculate_from_milestone
+from app.routers.dependencies import get_story_or_404
 
 router = APIRouter()
 
@@ -22,10 +23,7 @@ async def list_stories(epic_id: int, db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/{story_id}", response_model=StoryRead)
-async def get_story(story_id: int, db: AsyncSession = Depends(get_db)):
-    story = await db.get(Story, story_id)
-    if not story:
-        raise HTTPException(status_code=404, detail="Story not found")
+async def get_story(story: Story = Depends(get_story_or_404)):
     return story
 
 
@@ -61,11 +59,7 @@ async def create_story(data: StoryCreate, db: AsyncSession = Depends(get_db)):
 
 
 @router.patch("/{story_id}", response_model=StoryRead)
-async def update_story(story_id: int, data: StoryUpdate, db: AsyncSession = Depends(get_db)):
-    story = await db.get(Story, story_id)
-    if not story:
-        raise HTTPException(status_code=404, detail="Story not found")
-
+async def update_story(story: Story = Depends(get_story_or_404), data: StoryUpdate = None, db: AsyncSession = Depends(get_db)):
     updates = data.model_dump(exclude_unset=True)
     for key, value in updates.items():
         setattr(story, key, value)
@@ -91,10 +85,7 @@ async def update_story(story_id: int, data: StoryUpdate, db: AsyncSession = Depe
 
 
 @router.delete("/{story_id}", status_code=204)
-async def delete_story(story_id: int, db: AsyncSession = Depends(get_db)):
-    story = await db.get(Story, story_id)
-    if not story:
-        raise HTTPException(status_code=404, detail="Story not found")
+async def delete_story(story = Depends(get_story_or_404), db: AsyncSession = Depends(get_db)):
     epic_id = story.epic_id
     await db.delete(story)
     await db.flush()
