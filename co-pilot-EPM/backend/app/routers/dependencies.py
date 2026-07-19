@@ -1,16 +1,11 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends, HTTPException
-from app.database import get_db
-from app.models.member import Member
-from app.models.team import Team
-from app.models.milestone import Milestone
-from app.models.allocation import Allocation
-from app.models.phase import Phase
-from app.models.story import Story
-from app.models.project import Project
+from app.core.database import get_db
 from app.schemas.allocation import AllocationCreate, AllocationUpdate
-from app.services.allocation_service import update_allocation 
+from app.services.allocation_service import update_allocation
+from app.models import Epic, Milestone, Story, Member, Team, Phase, Project, Allocation
+from app.schemas.project import EpicCreate
 
 # Shared FastAPI dependencies for entity validation and get-or-404 patterns
 
@@ -70,6 +65,12 @@ async def get_milestone_or_404(milestone_id: int, db: AsyncSession = Depends(get
         raise HTTPException(status_code=404, detail="Milestone not found")
     return milestone
 
+async def get_milestone_from_body_or_404(data: EpicCreate, db: AsyncSession = Depends(get_db)) -> Milestone:
+    milestone = await db.get(Milestone, data.milestone_id)
+    if not milestone:
+        raise HTTPException(status_code=404, detail="Milestone not found")
+    return milestone
+
 
 async def get_phase_or_404(phase_id: int, db: AsyncSession = Depends(get_db)) -> Phase:
     phase = await db.get(Phase, phase_id)
@@ -89,3 +90,9 @@ async def get_project_or_404(project_id: int, db: AsyncSession = Depends(get_db)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     return project
+
+async def get_epic_or_404(epic_id: int, db: AsyncSession = Depends(get_db)) -> Epic:
+    epic = await db.get(Epic, epic_id)
+    if not epic:
+        raise HTTPException(status_code=404, detail="Epic not found")
+    return epic

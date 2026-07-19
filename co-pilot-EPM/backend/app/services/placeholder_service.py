@@ -187,11 +187,11 @@ async def consume_or_expand_milestone(
         await db.flush()
         # Create epic + story placeholder
         epic = Epic(name="Epic 1 (Placeholder)", milestone_id=new_ms.id,
-                     order_index=0, is_placeholder=True, state=ItemState.NOT_STARTED)
+                    order_index=0, is_placeholder=True, state=ItemState.NOT_STARTED)
         db.add(epic)
         await db.flush()
         story = Story(name="Story 1 (Placeholder)", epic_id=epic.id,
-                       order_index=0, is_placeholder=True, state=ItemState.NOT_STARTED)
+                    order_index=0, is_placeholder=True, state=ItemState.NOT_STARTED)
         db.add(story)
         await db.flush()
         return new_ms, False
@@ -235,7 +235,7 @@ async def consume_or_expand_epic(
         db.add(new_epic)
         await db.flush()
         story = Story(name="Story 1 (Placeholder)", epic_id=new_epic.id,
-                       order_index=0, is_placeholder=True, state=ItemState.NOT_STARTED)
+                        order_index=0, is_placeholder=True, state=ItemState.NOT_STARTED)
         db.add(story)
         await db.flush()
         return new_epic, False

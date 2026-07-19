@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
-from app.database import get_db
-from app.models import Milestone, Phase, Epic, Story
+from app.core.database import get_db
+from app.models import Milestone, Epic, Story
 from app.schemas.project import MilestoneCreate, MilestoneUpdate, MilestoneRead
 from app.services.placeholder_service import consume_or_expand_milestone, fill_milestone_gaps
 from app.services.reorder_service import insert_at_position, normalize_order
@@ -30,10 +30,9 @@ async def get_milestone(milestone_id: int, db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/{milestone_id}/contribution-matrix")
-async def milestone_contribution_matrix(milestone_id: int, db: AsyncSession = Depends(get_db)):
-    await get_milestone_or_404(milestone_id, db)
-    matrix = await get_milestone_contribution_matrix(db, milestone_id)
-    return {"milestone_id": milestone_id, "contributions": matrix}
+async def milestone_contribution_matrix(milestone: Milestone = Depends(get_milestone_or_404), db: AsyncSession = Depends(get_db)):
+    matrix = await get_milestone_contribution_matrix(db, milestone.id)
+    return {"milestone_id": milestone.id, "contributions": matrix}
 
 
 @router.post("/", response_model=MilestoneRead, status_code=201)

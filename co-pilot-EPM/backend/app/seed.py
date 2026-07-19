@@ -6,7 +6,7 @@ Run: python -m app.seed
 import asyncio
 from datetime import date
 from sqlalchemy import select, text
-from app.database import AsyncSessionLocal
+from app.core.database import AsyncSessionLocal
 from app.models import Team, Member, Project, Phase, Milestone, Epic, Story, Allocation, ItemState
 
 

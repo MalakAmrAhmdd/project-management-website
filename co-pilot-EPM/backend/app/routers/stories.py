@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
-
-from app.database import get_db
+from sqlalchemy import func as sqlfunc
+from app.core.database import get_db
 from app.models import Story, Epic, Milestone
 from app.schemas.project import StoryCreate, StoryUpdate, StoryRead
 from app.services.placeholder_service import consume_or_expand_story
@@ -47,7 +47,6 @@ async def create_story(data: StoryCreate, db: AsyncSession = Depends(get_db)):
 
     # Recalculate epic -> milestone -> phase -> project (points bubble up)
     # Story points contribute to epic points
-    from sqlalchemy import func as sqlfunc
     pts_result = await db.execute(
         select(sqlfunc.coalesce(sqlfunc.sum(Story.estimated_points), 0.0))
         .where(Story.epic_id == data.epic_id)

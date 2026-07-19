@@ -1,14 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
 from app.database import get_db
-from app.models import Epic, Milestone, Story
-from app.schemas.project import EpicCreate, EpicUpdate, EpicRead, EpicWithStories
+from app.models import Epic, Milestone
+from app.schemas.project import EpicCreate, EpicUpdate, EpicRead
 from app.services.placeholder_service import consume_or_expand_epic
 from app.services.reorder_service import insert_at_position, normalize_order
 from app.services.calculation_engine import cascade_recalculate_from_milestone
+from app.routers.dependencies import get_epic_or_404, get_milestone_from_body_or_404
 
 router = APIRouter()
 
@@ -22,19 +23,13 @@ async def list_epics(milestone_id: int, db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/{epic_id}", response_model=EpicRead)
-async def get_epic(epic_id: int, db: AsyncSession = Depends(get_db)):
-    epic = await db.get(Epic, epic_id)
-    if not epic:
-        raise HTTPException(status_code=404, detail="Epic not found")
+async def get_epic(epic: Epic = Depends(get_epic_or_404)):
     return epic
 
 
 @router.post("/", response_model=EpicRead, status_code=201)
-async def create_epic(data: EpicCreate, db: AsyncSession = Depends(get_db)):
-    milestone = await db.get(Milestone, data.milestone_id)
-    if not milestone:
-        raise HTTPException(status_code=404, detail="Milestone not found")
-
+async def create_epic(data: EpicCreate, db: AsyncSession = Depends(get_db) ,
+                    milestone: Milestone = Depends(get_milestone_from_body_or_404)):
     epic_data = data.model_dump(exclude={"milestone_id", "order_index"})
     epic_data["state"] = epic_data["state"].value if hasattr(epic_data["state"], "value") else epic_data["state"]
 
@@ -57,11 +52,7 @@ async def create_epic(data: EpicCreate, db: AsyncSession = Depends(get_db)):
 
 
 @router.patch("/{epic_id}", response_model=EpicRead)
-async def update_epic(epic_id: int, data: EpicUpdate, db: AsyncSession = Depends(get_db)):
-    epic = await db.get(Epic, epic_id)
-    if not epic:
-        raise HTTPException(status_code=404, detail="Epic not found")
-
+async def update_epic(data: EpicUpdate, epic: Epic = Depends(get_epic_or_404), db: AsyncSession = Depends(get_db)):
     updates = data.model_dump(exclude_unset=True)
     for key, value in updates.items():
         setattr(epic, key, value)
@@ -77,10 +68,7 @@ async def update_epic(epic_id: int, data: EpicUpdate, db: AsyncSession = Depends
 
 
 @router.delete("/{epic_id}", status_code=204)
-async def delete_epic(epic_id: int, db: AsyncSession = Depends(get_db)):
-    epic = await db.get(Epic, epic_id)
-    if not epic:
-        raise HTTPException(status_code=404, detail="Epic not found")
+async def delete_epic(epic: Epic = Depends(get_epic_or_404), db: AsyncSession = Depends(get_db)):
     milestone_id = epic.milestone_id
     await db.delete(epic)
     await db.flush()

@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from typing import List
-from app.database import get_db
+from app.core.database import get_db
 from app.models import Team
 from app.schemas.team import TeamCreate, TeamUpdate, TeamRead, TeamWithMembers
 from app.routers.dependencies import get_team_or_404

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends,Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
-from app.database import get_db
+from app.core.database import get_db
 from app.models import Member
 from app.schemas.member import MemberCreate, MemberUpdate, MemberRead, MemberWithContributions
 from app.services.allocation_service import get_member_contribution_matrix
@@ -53,4 +53,5 @@ async def update_member(data: MemberUpdate, db: AsyncSession = Depends(get_db), 
 
 @router.delete("/{member_id}", status_code=204)
 async def delete_member(member: Member = Depends(get_member_or_404), db: AsyncSession = Depends(get_db)):
+    
     await db.delete(member)
