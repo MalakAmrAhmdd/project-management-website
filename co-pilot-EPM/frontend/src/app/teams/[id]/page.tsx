@@ -10,6 +10,8 @@ import { useState } from "react";
 import { useParams } from "next/navigation";
 import { TeamCard } from "@/components/Shared/TeamCard";
 import { useTeamDetailData } from "@/hooks/useTeamDetailData";
+import { ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function TeamDetailPage() {
   const { id } = useParams();
@@ -30,6 +32,8 @@ export default function TeamDetailPage() {
     deleteMember,
   } = useTeamDetailData(teamId);
 
+  const router = useRouter();
+
   if (isLoading)
     return <div className="text-center py-12 text-surface-400">Loading...</div>;
   if (!team)
@@ -41,6 +45,11 @@ export default function TeamDetailPage() {
 
   return (
     <div className="space-y-6">
+      <div>
+        <button onClick={() => router.back()} className="text-surface-400 hover:text-surface-600 flex items-center gap-2">
+          <ArrowLeft className="w-5 h-5" /> Back
+        </button>
+      </div>
       <TeamCard
         name={team.name}
         description={team.description}

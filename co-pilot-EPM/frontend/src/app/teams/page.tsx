@@ -3,6 +3,7 @@
 import { InlineInput } from "@/components/InlineInput";
 import { Plus, Trash2, Users, ChevronRight, FolderKanban } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useTeamsData } from "@/hooks/useTeamsData";
 
@@ -20,6 +21,7 @@ export default function TeamsPage() {
     memberCountByTeam,
     projectCountByTeam,
   } = useTeamsData();
+  const router = useRouter();
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && newName.trim())
@@ -137,27 +139,19 @@ export default function TeamsPage() {
               {teams.map((team) => (
                 <tr
                   key={team.id}
-                  className="border-b border-surface-100 hover:bg-surface-50 group"
+                  className="border-b border-surface-100 hover:bg-surface-50 group cursor-pointer"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => router.push(`/teams/${team.id}`)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") router.push(`/teams/${team.id}`);
+                  }}
                 >
                   <td className="px-4 py-2">
-                    <div className="flex items-center gap-2">
-                      <InlineInput
-                        value={team.name}
-                        onSave={(v) =>
-                          updateTeam.mutate({ id: team.id, name: v })
-                        }
-                        className="font-semibold"
-                      />
-                    </div>
+                    <div className="font-semibold">{team.name}</div>
                   </td>
-                  <td className="px-4 py-2">
-                    <InlineInput
-                      value={team.description}
-                      onSave={(v) =>
-                        updateTeam.mutate({ id: team.id, description: v })
-                      }
-                      placeholder="No description"
-                    />
+                  <td className="px-4 py-2 text-surface-600">
+                    {team.description || "No description"}
                   </td>
                   <td className="px-4 py-2 text-center">
                     <span className="badge bg-blue-50 text-blue-700">
@@ -175,13 +169,15 @@ export default function TeamsPage() {
                     <div className="flex items-center justify-center gap-2">
                       <Link
                         href={`/teams/${team.id}`}
+                        onClick={(e) => e.stopPropagation()}
                         className="text-primary-600 hover:text-primary-700 p-1"
                         title="View team"
                       >
                         <ChevronRight className="w-4 h-4" />
                       </Link>
                       <button
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           if (confirm(`Delete team "${team.name}"?`))
                             deleteTeam.mutate(team.id);
                         }}
