@@ -1,6 +1,14 @@
 import Link from "next/link";
-import { InlineInput } from "@/components/InlineInput";
-import { Users, FolderKanban, ChevronRight, Trash2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import {
+  Users,
+  FolderKanban,
+  ChevronRight,
+  Trash2,
+  Edit2,
+  Check,
+  X,
+} from "lucide-react";
 
 export interface TeamCardProps {
   id?: number;
@@ -33,32 +41,135 @@ export function TeamCard({
   onDelete,
   className = "",
 }: TeamCardProps) {
+  const [editingName, setEditingName] = useState(false);
+  const [editingDesc, setEditingDesc] = useState(false);
+  const [localName, setLocalName] = useState(name);
+  const [localDesc, setLocalDesc] = useState(description || "");
+
+  useEffect(() => setLocalName(name), [name]);
+  useEffect(() => setLocalDesc(description || ""), [description]);
+
   return (
     <div className={`space-y-4 ${className}`}>
       <div className="flex items-center gap-4">
         <div className="flex-1">
-          <InlineInput
-            value={name}
-            onSave={(v) => onEditName?.(v)}
-            className="text-2xl font-bold"
-          />
-          <InlineInput
-            value={description || ""}
-            onSave={(v) => onEditDescription?.(v)}
-            placeholder="Add a description..."
-            className="text-surface-500 text-sm mt-1"
-          />
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between gap-3">
+              {!editingName ? (
+                <h2 className="text-2xl font-bold">{localName}</h2>
+              ) : (
+                <div className="flex items-center gap-2 flex-1">
+                  <input
+                    className="input flex-1"
+                    value={localName}
+                    onChange={(e) => setLocalName(e.target.value)}
+                  />
+                  <button
+                    onClick={() => {
+                      if (!localName.trim()) return;
+                      if (confirm("Are you sure you want to save the name?")) {
+                        onEditName?.(localName.trim());
+                        setEditingName(false);
+                      }
+                    }}
+                    title="Save name"
+                    className="btn-primary text-sm"
+                  >
+                    <Check className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setLocalName(name);
+                      setEditingName(false);
+                    }}
+                    title="Cancel"
+                    className="btn-secondary text-sm"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+              {!editingName && (
+                <button
+                  onClick={() => setEditingName(true)}
+                  title="Edit name"
+                  className="text-surface-400 hover:text-surface-600 p-1"
+                >
+                  <Edit2 className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between gap-3 text-surface-500 text-sm">
+              {!editingDesc ? (
+                <div className="flex-1">
+                  {localDesc || "Add a description..."}
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 flex-1">
+                  <input
+                    className="input flex-1"
+                    value={localDesc}
+                    onChange={(e) => setLocalDesc(e.target.value)}
+                  />
+                  <button
+                    onClick={() => {
+                      if (
+                        confirm(
+                          "Are you sure you want to save the description?",
+                        )
+                      ) {
+                        onEditDescription?.(localDesc);
+                        setEditingDesc(false);
+                      }
+                    }}
+                    title="Save description"
+                    className="btn-primary text-sm"
+                  >
+                    <Check className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setLocalDesc(description || "");
+                      setEditingDesc(false);
+                    }}
+                    title="Cancel"
+                    className="btn-secondary text-sm"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+              {!editingDesc && (
+                <button
+                  onClick={() => setEditingDesc(true)}
+                  title="Edit description"
+                  className="text-surface-400 hover:text-surface-600 p-1"
+                >
+                  <Edit2 className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
         {showActions && (
           <div className="flex items-center gap-2">
             {viewHref ? (
-              <Link href={viewHref} className="text-primary-600 hover:text-primary-700 p-1" title="View team">
+              <Link
+                href={viewHref}
+                className="text-primary-600 hover:text-primary-700 p-1"
+                title="View team"
+              >
                 <ChevronRight className="w-5 h-5" />
               </Link>
             ) : null}
             {onDelete && (
-              <button onClick={onDelete} className="text-red-400 hover:text-red-600 p-1" title="Delete team">
+              <button
+                onClick={onDelete}
+                className="text-red-400 hover:text-red-600 p-1"
+                title="Delete team"
+              >
                 <Trash2 className="w-5 h-5" />
               </button>
             )}

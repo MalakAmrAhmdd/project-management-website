@@ -104,36 +104,50 @@ export function NewMemberRow({
       <td className="px-3 py-2"></td>
       {isVisible("name") && (
         <td className="px-3 py-2">
-          <input ref={nameRef} value={name}
+          <input
+            ref={nameRef}
+            value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Name" className="input py-1 px-2 text-sm"
-            onKeyDown={handleKeyDown} />
+            placeholder="Name"
+            className="input py-1 px-2 text-sm"
+            onKeyDown={handleKeyDown}
+          />
         </td>
       )}
       {isVisible("email") && (
         <td className="px-3 py-2">
-          <input value={email}
+          <input
+            value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email" className="input py-1 px-2 text-sm"
-            onKeyDown={handleKeyDown} />
+            placeholder="Email"
+            className="input py-1 px-2 text-sm"
+            onKeyDown={handleKeyDown}
+          />
         </td>
       )}
       {isVisible("role") && (
         <td className="px-3 py-2">
-          <input value={role}
+          <input
+            value={role}
             onChange={(e) => setRole(e.target.value)}
-            placeholder="Role" className="input py-1 px-2 text-sm"
-            onKeyDown={handleKeyDown} />
+            placeholder="Role"
+            className="input py-1 px-2 text-sm"
+            onKeyDown={handleKeyDown}
+          />
         </td>
       )}
       {/* only renders on resources page where teams array is provided */}
       {isVisible("team") && teams.length > 0 && (
         <td className="px-3 py-2">
-          <select value={teamId}
+          <select
+            value={teamId}
             onChange={(e) => setTeamId(Number(e.target.value))}
-            className="input py-1 px-2 text-sm w-36">
+            className="input py-1 px-2 text-sm w-36"
+          >
             {teams.map((t) => (
-              <option key={t.id} value={t.id}>{t.name}</option>
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
             ))}
           </select>
         </td>
@@ -147,10 +161,15 @@ export function NewMemberRow({
               if (name && email) onSave({ name, email, role, team_id: teamId });
             }}
             className="btn-primary text-xs py-1 px-3"
-          >Save</button>
-          <button onClick={onCancel}
+          >
+            Save
+          </button>
+          <button
+            onClick={onCancel}
             className="btn-secondary text-xs py-1 px-3"
-          >Cancel</button>
+          >
+            Cancel
+          </button>
         </td>
       )}
     </tr>

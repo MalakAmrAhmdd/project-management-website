@@ -19,7 +19,6 @@ export const RESOURCE_COLUMNS: ColumnDef[] = [
   { key: "allocation", label: "Allocation %" },
   { key: "velocity", label: "Avg Velocity" },
   { key: "actions", label: "Actions" },
-  { key: "contributions", label: "Contributions", defaultVisible: false },
 ];
 
 export const MANAGEMENT_TABS = [
@@ -36,7 +35,6 @@ export const TEAM_MEMBER_COLUMNS: ColumnDef[] = [
   { key: "role", label: "Role" },
   { key: "allocation", label: "Allocation %" },
   { key: "velocity", label: "Avg Velocity" },
-  { key: "contributions", label: "Contributions", defaultVisible: false },
   { key: "actions", label: "Actions" },
 ];
 
