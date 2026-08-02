@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, DateTime, func
-from app.database import Base
+from app.core.database import Base
 
 
 class ChangeLog(Base):
