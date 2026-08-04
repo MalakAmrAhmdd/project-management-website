@@ -6,42 +6,32 @@ from typing import List
 from app.core.database import get_db
 from app.models import Team
 from app.schemas.team import TeamCreate, TeamUpdate, TeamRead, TeamWithMembers
-from app.routers.dependencies import get_team_or_404
+from app.dependencies.entities import get_or_404
+from app.repositories.team import TeamRepository
 
 router = APIRouter()
+team_repo = TeamRepository(Team)
 
 @router.get("/", response_model=List[TeamRead])
 async def list_teams(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Team).order_by(Team.name))
-    return result.scalars().all()
+    return await team_repo.list(db)
 
-@router.get("/{team_id}", response_model=TeamWithMembers)
-async def get_team(team_id: int, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
-        select(Team).options(selectinload(Team.members)).where(Team.id == team_id)
-    )
-    team = result.scalar_one_or_none()
+@router.get("/{id}", response_model=TeamWithMembers)
+async def get_team(id: int, db: AsyncSession = Depends(get_db)):
+    team = await team_repo.get(id, db)
     if not team:
         raise HTTPException(status_code=404, detail="Team not found")
     return team
 
 @router.post("/", response_model=TeamRead, status_code=201)
 async def create_team(data: TeamCreate, db: AsyncSession = Depends(get_db)):
-    team = Team(**data.model_dump())
-    db.add(team)
-    await db.flush()
-    await db.refresh(team)
-    return team
+    return await team_repo.create(data, db)
 
-@router.patch("/{team_id}", response_model=TeamRead)
+@router.patch("/{id}", response_model=TeamRead)
 async def update_team(data: TeamUpdate,
-                    db: AsyncSession = Depends(get_db), team: Team = Depends(get_team_or_404)):
-    for key, value in data.model_dump(exclude_unset=True).items():
-        setattr(team, key, value)
-    await db.flush()
-    await db.refresh(team)
-    return team
+                    db: AsyncSession = Depends(get_db), team: Team = Depends(get_or_404(Team))):
+    return await team_repo.update(team, data, db)
 
-@router.delete("/{team_id}", status_code=204)
-async def delete_team( db: AsyncSession = Depends(get_db), team: Team = Depends(get_team_or_404)):
-    await db.delete(team)
+@router.delete("/{id}", status_code=204)
+async def delete_team( db: AsyncSession = Depends(get_db), team: Team = Depends(get_or_404(Team))):
+    await team_repo.delete(team, db)
