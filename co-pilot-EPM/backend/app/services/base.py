@@ -8,18 +8,16 @@ T = TypeVar("T")
 class HierarchyService(Generic[T]):
     def __init__(
         self,
-        db: AsyncSession,
         repo: BaseRepository[T],
         parent_field: str,          # "phase_id", "milestone_id", "project_id"
         create_placeholders: Callable  # function to create children placeholders
     ):
-        self.db = db
         self.repo = repo
         self.parent_field = parent_field
         self.create_placeholders = create_placeholders
 
-    async def consume_or_expand(self, parent_id: int, data: dict) -> tuple[T, bool]:
-        placeholder = await self.repo.find_placeholder(self.db, self.parent_field, parent_id)
+    async def consume_or_expand(self, parent_id: int, data: dict, db: AsyncSession) -> tuple[T, bool]:
+        placeholder = await self.repo.find_placeholder(db, self.parent_field, parent_id)
 
         if placeholder:
             for key, value in data.items():
@@ -28,7 +26,7 @@ class HierarchyService(Generic[T]):
             placeholder.is_placeholder = False
             return placeholder, True
         else:
-            max_idx = await self.repo.get_max_order_index(self.db, self.parent_field, parent_id)
+            max_idx = await self.repo.get_max_order_index(db, self.parent_field, parent_id)
             data.pop("is_placeholder", None)
             obj = self.repo.model(
                 **{self.parent_field: parent_id},
@@ -36,8 +34,8 @@ class HierarchyService(Generic[T]):
                 is_placeholder=False,
                 **data
             )
-            await self.repo.create(self.db, obj)
-            await self.create_placeholders(self.db, obj.id)
+            await self.repo.create(db, obj)
+            await self.create_placeholders(db, obj.id)
             return obj, False
 
     async def create_placeholder(self, parent_id: int) -> T:

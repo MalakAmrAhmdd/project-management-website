@@ -28,11 +28,8 @@ class ProjectRepository(BaseRepository):
         updates = data.model_dump(exclude_unset=True)
         for key, value in updates.items():
             setattr(project, key, value)
-    
         # If state or points changed, recalculate
         if "total_estimated_points" in updates or "state" in updates:
             await cascade_recalculate_from_project(db, project.id, reason="Project fields updated")
-    
-        await db.flush()
-        await db.refresh(project)
+        await self.save(project, db)
         return project
