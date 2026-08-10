@@ -5,7 +5,7 @@ from sqlalchemy.orm import selectinload
 from typing import List
 
 from app.routers.dependencies import get_project_or_404
-from app.database import get_db
+from app.core.database import get_db
 from app.models import Project, Phase, Milestone, Epic
 from app.schemas.project import (
     ProjectCreate, ProjectUpdate, ProjectRead, ProjectFull,

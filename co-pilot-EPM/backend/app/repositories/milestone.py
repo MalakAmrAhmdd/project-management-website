@@ -1,8 +1,6 @@
-from fastapi import Query
-from app.core.database import get_db
 from sqlalchemy import select
 from app.repositories.base import BaseRepository
-from app.models import Milestone, Epic, Story
+from app.models import Milestone
 from app.services.placeholder_service import consume_or_expand_milestone, fill_milestone_gaps
 from app.services.reorder_service import insert_at_position, normalize_order
 from app.services.calculation_engine import cascade_recalculate_from_milestone

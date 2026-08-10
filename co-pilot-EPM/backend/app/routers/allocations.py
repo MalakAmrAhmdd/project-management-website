@@ -2,15 +2,15 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
-from app.database import get_db
+from app.core.database import get_db
 from app.models import Allocation, Member, Milestone, Phase, Project
 from app.schemas.allocation import AllocationCreate, AllocationRead, AllocationWithDetails
-from app.routers.dependencies import get_allocation_or_404, valid_allocation_create
+from app.dependencies.entities import get_or_404
 from app.services.allocation_service import (
     allocate_member,
     remove_allocation,
 )
-
+from app.routers.dependencies import valid_allocation_create
 router = APIRouter()
 
 @router.get("/", response_model=List[AllocationWithDetails])
@@ -68,7 +68,7 @@ async def create_allocation(data: AllocationCreate = Depends(valid_allocation_cr
     return alloc
 
 @router.patch("/{allocation_id}", response_model=AllocationRead)
-async def update_alloc(allocation: Allocation = Depends(get_allocation_or_404), db: AsyncSession = Depends(get_db)):
+async def update_alloc(allocation: Allocation = Depends(get_or_404(Allocation))):
     return allocation
 
 
