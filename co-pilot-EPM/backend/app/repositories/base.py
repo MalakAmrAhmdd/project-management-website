@@ -3,29 +3,28 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 class BaseRepository(ABC):
-    def __init__(self, model ,db: AsyncSession):
+    def __init__(self, model):
         self.model = model 
-        self.db = db
 
-    async def get(self, id: int):
-        return await self.db.get(self.model, id)
+    async def get(self, id: int,db: AsyncSession):
+        return await db.get(self.model, id)
 
-    async def create(self, data: BaseModel):
+    async def create(self, data: BaseModel, db: AsyncSession):
         obj = self.model(**data.model_dump())
-        self.db.add(obj)
-        await self.db.flush()
-        await self.db.refresh(obj)
+        db.add(obj)
+        await db.flush()
+        await db.refresh(obj)
         return obj
 
-    async def update(self, obj, data: BaseModel):
+    async def update(self, obj, data: BaseModel, db: AsyncSession):
         for key, value in data.model_dump(exclude_unset=True).items():
             setattr(obj, key, value)
-        await self.db.flush()
-        await self.db.refresh(obj)
+        await db.flush()
+        await db.refresh(obj)
         return obj
 
-    async def delete(self, obj):
-        await self.db.delete(obj)
+    async def delete(self, obj,db: AsyncSession):
+        await db.delete(obj)
 
     @abstractmethod
     async def list(self) -> list: ...
