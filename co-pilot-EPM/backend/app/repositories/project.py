@@ -7,8 +7,8 @@ from app.services.calculation_engine import cascade_recalculate_from_milestone
 from app.routers.dependencies import get_phase_or_404 , get_milestone_or_404
 
 
-class ProjectRepository(BaseRepository[Milestone]):
-    async def list(self, phase_id: int)->list[Milestone]:
+class ProjectRepository(BaseRepository):
+    async def list(self, phase_id: int)->list:
         result = await self.db.execute(
         select(self.model).where(self.model.phase_id == phase_id).order_by(Milestone.order_index)
     )

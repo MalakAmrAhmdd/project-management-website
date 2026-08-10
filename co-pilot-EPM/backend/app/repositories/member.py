@@ -5,7 +5,7 @@ from typing import Optional
 from app.repositories.base import BaseRepository
 from app.models.member import Member
 
-class MemberRepository(BaseRepository[Member]):
+class MemberRepository(BaseRepository):
     async def list(self, team_id: Optional[int] = Query(None)):
         q = select(self.model).order_by(self.model.name)
         if team_id is not None:

@@ -12,14 +12,14 @@ from app.schemas.project import (
 )
 from app.services.placeholder_service import create_project_placeholders
 from app.services.calculation_engine import cascade_recalculate_from_project
+from app.repositories.project import ProjectRepository
 
 router = APIRouter()
-
+project_repo = ProjectRepository(Project,Depends(get_db))
 
 @router.get("/", response_model=List[ProjectRead])
-async def list_projects(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Project).order_by(Project.name))
-    return result.scalars().all()
+async def list_projects():
+    return project_repo.list()
 
 
 @router.get("/{project_id}", response_model=ProjectFull)
